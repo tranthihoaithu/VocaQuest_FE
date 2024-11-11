@@ -1,0 +1,2 @@
+Để thêm icon Cài đặt thư viện react-native-vector-icons
+Chạy lệnh sau để cài đặt: npm install react-native-vector-icons
