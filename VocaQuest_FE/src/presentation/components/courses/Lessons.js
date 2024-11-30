@@ -1,351 +1,183 @@
-// import React, { useEffect,useState } from 'react';
-// import axios from 'axios';
-// import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-// import { useNavigation } from "@react-navigation/native";
-
-// const Lessons = () => {
-//   const navigation = useNavigation();
-//   const [lessons, setLessons] = useState([]);
-
-//   // Gọi API khi component được render
-//   useEffect(() => {
-//     axios.get('http://127.0.0.1:8000/lessons/')  // URL của API Django
-//       .then(response => {
-//         setLessons(response.data);  // Lưu dữ liệu vào state
-//         console.log(data);
-//       })
-//       .catch(error => {
-//         console.error('Error fetching data:', error);
-//       });
-//   }, []);
-
-//   const renderCourse = ({ item }) => {
-    
-//     return (
-//       <TouchableOpacity onPress={() => navigation.navigate('Topics')}><View style={styles.listCourses}>
-//         {/* Course Header */}
-//         <View style={styles.titleCourse}>
-//           <View>
-//             <Image style={styles.avartarImage} />
-//           </View>
-//           <View>
-//           <View style={styles.lessonItem}>
-//             <Text style={styles.lessonTitle}>{item.title}</Text>  {/* Title displayed here */}
-//           </View>
-//           </View>
-//           <View>
-//             <TouchableOpacity>
-//               <Image style={styles.iconEllipsis} source={require('../../../images/more.png')} />
-//             </TouchableOpacity>
-//           </View>
-//         </View>
-
-//         {/* Progress */}
-//         <View>
-//           <View style={styles.Progress}>
-//             <View style={styles.row}>
-//               <Text style={styles.textProgressOne}>{item.progress}%</Text>
-//               <Text style={styles.textProgressTwo}>{item.completed}/{item.total} Mục đã học</Text>
-//             </View>
-//           </View>
-
-//           {/* Progress Bar */}
-//           <View style={styles.progressBarContainer}>
-//             <View style={[styles.progressBar, { width: `${item.progress}%` }]} />
-//           </View>
-
-//           {/* New Words Section */}
-//           <View style={styles.newWordsSection}>
-//             <TouchableOpacity style={styles.newWordsTextContainer} onPress={()=>navigation.navigate('Topics')}>
-//               <Text style={styles.newWordsText}>Chưa Học từ mới</Text>
-//             </TouchableOpacity>
-//             <TouchableOpacity style={styles.iconContainer}>
-//               <Image style={styles.iconDotsMenu} source={require('../../../images/dots-menu.png')} />
-//             </TouchableOpacity>
-//           </View>
-//         </View>
-//       </View>
-//     </TouchableOpacity>
-      
-//     );
-//   };
-
-//   return (
-//     <FlatList
-//       data={lessons}
-//       renderItem={renderCourse}
-//       keyExtractor={(item) => item.id}
-//     />
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//   listCourses: {
-//     margin: 20,
-//     height: 200,
-//     borderRadius: 10,
-//     backgroundColor: '#D74949',
-//   },
-//   titleCourse: {
-//     padding: 10,
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     display: 'flex',
-//   },
-//   avartarImage: {
-//     borderRadius: 60,
-//     width: 44,
-//     height: 44,
-//     backgroundColor: '#000555',
-//   },
-//   textName: {
-//     fontSize: 22,
-//   },
-//   iconEllipsis: {
-//     height: 40,
-//     width: 40,
-//   },
-//   Progress: {
-//     paddingLeft: 20,
-//     paddingRight: 20,
-//   },
-//   row: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//   },
-//   textProgressOne: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     marginRight: 10,
-//   },
-//   textProgressTwo: {
-//     fontSize: 16,
-//   },
-//   progressBarContainer: {
-//     height: 25,
-//     marginLeft: 15,
-//     marginRight: 15,
-//     borderRadius: 20,
-//     backgroundColor: '#D9D9BB',
-//     overflow: 'hidden',
-//     marginTop: 15,
-//   },
-//   progressBar: {
-//     height: '100%',
-//     backgroundColor: '#F4D00F',
-//   },
-//   newWordsSection: {
-//     flexDirection: 'row',
-//     justifyContent: 'space-between',
-//     alignItems: 'center',
-//     padding: 16,
-//   },
-//   newWordsTextContainer: {
-//     flex: 1, // Adjust as needed
-//     marginRight: 8, // Add some spacing between the text and the icon
-//   },
-//   newWordsText: {
-//     fontSize: 18,
-//     color: '#fff',
-//     backgroundColor: '#F4D00F',
-//     width: '100%', // Change to '100%' for full width
-//     height: 40,
-//     textAlign: 'center',
-//     lineHeight: 40,
-//     borderRadius: 8,
-//   },
-//   iconContainer: {
-//     height: 40,
-//     width: 40,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     borderRadius: 8,
-//     backgroundColor: '#D9D9D9',
-//   },
-//   iconDotsMenu: {
-//     height: 25,
-//     width: 25,
-//   },
-// });
-// export default Lessons;
-
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { View, Text, Image, FlatList, TouchableOpacity, Modal } from 'react-native';
+import { useNavigation } from "@react-navigation/native";
+import { API_URL } from '@env';
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { ScrollView } from 'react-native';
+import { styles } from './Style_Lessons';
 
 const Lessons = () => {
   const navigation = useNavigation();
-  const [lessons] = useState([
-    {
-      id: '1',
-      title: 'Lesson 1',
-      progress: 50,
-      completed: 5,
-      total: 10,
-    },
-    {
-      id: '2',
-      title: 'Lesson 2',
-      progress: 75,
-      completed: 15,
-      total: 20,
-    },
-    {
-      id: '3',
-      title: 'Lesson 3',
-      progress: 30,
-      completed: 3,
-      total: 10,
-    },
-    // Add more lessons as needed
-  ]);
+  const [lessons, setLessons] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [goal, setGoal] = useState(null);
+  const [confirmationModalVisible, setConfirmationModalVisible] = useState(false);
 
-  const renderCourse = ({ item }) => {
-    return (
-      <TouchableOpacity>
-        <View style={styles.listCourses}>
-          {/* Course Header */}
-          <View style={styles.titleCourse}>
-            {/* <View>
-              <Image style={styles.avartarImage} />
-            </View> */}
-            <View>
-              <View style={styles.lessonItem}>
-                <Text style={styles.lessonTitle}>{item.title}</Text> {/* Title displayed here */}
-              </View>
+  console.log(API_URL);
+  useEffect(() => {
+    axios
+      .get(`${API_URL}/lessons/`)
+      .then(response => {
+        setLessons(response.data);
+        console.log(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+      });
+  }, []);
+
+  const renderCourse = ({ item }) => (
+    <TouchableOpacity onPress={() => navigation.navigate('LessonDetails', { lesson_id: item.id })}>
+      <View style={styles.listCourses}>
+        {/* Course Header */}
+        <View style={styles.titleCourse}>
+          <View style={styles.container}>
+            <Image source={{ uri: item.image }} style={styles.avartarImage} />
+            <Text style={styles.lessonTitle}>{item.title}</Text>
+            <View style={styles.iconContainer2}>
+              <Icon name="rocket" size={24} color="#000" onPress={() => setModalVisible(true)} />
             </View>
-            <View>
-              <TouchableOpacity>
-                <Image style={styles.iconEllipsis} source={require('../../../images/more.png')} />
-              </TouchableOpacity>
+          </View>
+          <View>
+            <TouchableOpacity>
+              <Image style={styles.iconEllipsis} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Progress */}
+        <View>
+          <View style={styles.Progress}>
+            <View style={styles.row}>
+              {/* <Text style={styles.textProgressOne}>{item.progress}%</Text> */}
+              <Text style={styles.textProgressOne}>20%</Text>
+              {/* <Text style={styles.textProgressTwo}>{item.completed}/{item.total_vocab} mục đã học</Text> */}
+              <Text style={styles.textProgressTwo}>5/{item.total_vocab} mục đã học</Text>
             </View>
           </View>
 
-          {/* Progress */}
-          <View>
-            <View style={styles.Progress}>
-              <View style={styles.row}>
-                <Text style={styles.textProgressOne}>{item.progress}%</Text>
-                <Text style={styles.textProgressTwo}>
-                  {item.completed}/{item.total} Mục đã học
-                </Text>
-              </View>
-            </View>
+          {/* Progress Bar */}
+          <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBar, { width: `${item.progress}%` }]} />
+          </View>
 
-            {/* Progress Bar */}
-            <View style={styles.progressBarContainer}>
-              <View style={[styles.progressBar, { width: `${item.progress}%` }]} />
-            </View>
+          {/* New Words Section */}
+          <View style={styles.newWordsSection}>
+            <TouchableOpacity style={styles.newWordsTextContainer} onPress={() => navigation.navigate('LessonDetails', { lesson_id: item.id })}>
+              <Text style={styles.newWordsText}>Học Từ Vựng</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconContainer}>
+              <Image style={styles.iconDotsMenu} source={require('../../../images/dots-menu.png')} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
-            {/* New Words Section */}
-            <View style={styles.newWordsSection}>
-              <TouchableOpacity style={styles.newWordsTextContainer} onPress={() => navigation.navigate('Topics')}>
-                <Text style={styles.newWordsText}>Chưa Học từ mới</Text>
+  const handleGoalSelection = (selectedGoal) => {
+    setGoal(selectedGoal);
+    setModalVisible(false); 
+    setConfirmationModalVisible(true);
+  };
+
+  const handleConfirmSelection = () => {
+    setConfirmationModalVisible(false);
+    console.log(`Goal selected: ${goal}`);
+  };
+
+  return (
+    <View>
+      <FlatList
+        data={lessons}
+        renderItem={renderCourse}
+        keyExtractor={(item) => item.id.toString()}
+      />
+
+      {/* Popup Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Chọn mục tiêu hàng ngày</Text>
+            <Text style={styles.modalBody}>TỪ MỖI NGÀY</Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.button} onPress={() => handleGoalSelection(5)}>
+                <Text style={styles.buttonText}>5</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.iconContainer}>
-                <Image style={styles.iconDotsMenu} source={require('../../../images/dots-menu.png')} />
+              <TouchableOpacity style={styles.button} onPress={() => handleGoalSelection(10)}>
+                <Text style={styles.buttonText}>10</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={() => handleGoalSelection(15)}>
+                <Text style={styles.buttonText}>15</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>Đóng</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirmSelection}
+              >
+                <Text style={styles.closeButtonText}>Xác Nhận</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
-      </TouchableOpacity>
-    );
-  };
+      </Modal>
 
-  return <FlatList data={lessons} renderItem={renderCourse} keyExtractor={(item) => item.id} />;
+      {/* Confirmation Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={confirmationModalVisible}
+        onRequestClose={() => setConfirmationModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Xác Nhận Mục Tiêu</Text>
+            <Text style={styles.modalBody}>
+              Bạn đã chọn mục tiêu: {goal} từ vựng mỗi ngày.
+            </Text>
+
+            <ScrollView
+              horizontal
+              contentContainerStyle={styles.daysContainer}
+              showsHorizontalScrollIndicator={false}
+            >
+              {Array.from({ length: goal }).map((_, index) => (
+                <View key={index} style={styles.dayCircle}>
+                  <Text style={styles.dayText}>{index + 1}</Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => {
+                setConfirmationModalVisible(false);
+                setModalVisible(true);
+              }}
+            >
+              <Text style={styles.editButtonText}>Chỉnh sửa mục tiêu</Text>
+            </TouchableOpacity>
+
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
 };
 
-const styles = StyleSheet.create({
-  listCourses: {
-    margin: 20,
-    height: 200,
-    borderRadius: 10,
-    backgroundColor: '#D74949',
-  },
-  titleCourse: {
-    padding: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    display: 'flex',
-  },
-  avartarImage: {
-    borderRadius: 60,
-width: 44,
-    height: 44,
-    backgroundColor: '#000555',
-  },
-  textName: {
-    fontSize: 22,
-  },
-  iconEllipsis: {
-    height: 40,
-    width: 40,
-  },
-  Progress: {
-    paddingLeft: 20,
-    paddingRight: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  textProgressOne: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginRight: 10,
-  },
-  textProgressTwo: {
-    fontSize: 16,
-  },
-  progressBarContainer: {
-    height: 25,
-    marginLeft: 15,
-    marginRight: 15,
-    borderRadius: 20,
-    backgroundColor: '#D9D9BB',
-    overflow: 'hidden',
-    marginTop: 15,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#F4D00F',
-  },
-  newWordsSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  newWordsTextContainer: {
-    flex: 1, // Adjust as needed
-    marginRight: 8, // Add some spacing between the text and the icon
-  },
-  newWordsText: {
-    fontSize: 18,
-    color: '#fff',
-    backgroundColor: '#F4D00F',
-    width: '100%', // Change to '100%' for full width
-    height: 40,
-    textAlign: 'center',
-    lineHeight: 40,
-    borderRadius: 8,
-  },
-  iconContainer: {
-    height: 40,
-    width: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    backgroundColor: '#D9D9D9',
-  },
-  iconDotsMenu: {
-    height: 25,
-    width: 25,
-  },
-});
 
 export default Lessons;
+
+
