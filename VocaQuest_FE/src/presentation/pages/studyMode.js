@@ -1,21 +1,10 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import Header from '../components/header/Header';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import Header from '../components/header/Header';
 
-const StudyMode = () => {
-  const vocabularyList = [
-    { id: '1', english: 'Apple', vietnamese: 'Táo', pronunciation: '/ˈæpl/', type: 'V' },
-    { id: '2', english: 'Book', vietnamese: 'Sách', pronunciation: '/bʊk/', type: 'ADJ' },
-    { id: '3', english: 'Run', vietnamese: 'Chạy', pronunciation: '/rʌn/', type: 'V' },
-    { id: '4', english: 'Happy', vietnamese: 'Vui', pronunciation: '/ˈhæpi/', type: 'ADJ' },
-    { id: '5', english: 'Fast', vietnamese: 'Nhanh', pronunciation: '/fæst/', type: 'A' },
-    { id: '6', english: 'Study', vietnamese: 'Học', pronunciation: '/ˈstʌdi/', type: 'V' },
-    { id: '7', english: 'Big', vietnamese: 'Lớn', pronunciation: '/bɪɡ/', type: 'ADJ' },
-    { id: '8', english: 'Quick', vietnamese: 'Nhanh', pronunciation: '/kwɪk/', type: 'ADJ' },
-    { id: '9', english: 'Food', vietnamese: 'Thức ăn', pronunciation: '/fuːd/', type: 'N' },
-    { id: '10', english: 'Chair', vietnamese: 'Cái ghế', pronunciation: '/tʃɛr/', type: 'N' },
-  ];
+const StudyMode = ({ route, navigation }) => {
+  const { wordsToCheck } = route.params;   // Nhận từ vựng từ tham số
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -23,17 +12,17 @@ const StudyMode = () => {
   const [correctAnswer, setCorrectAnswer] = useState(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
 
-  const progress = (currentIndex / vocabularyList.length) * 100;
+  const progress = (currentIndex / wordsToCheck.length) * 100;
 
   const handleNextWord = () => {
-    if (currentIndex < vocabularyList.length - 1) {
+    if (currentIndex < wordsToCheck.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setSelectedAnswer(null);
       setIsAnswerChecked(false);
       const randomType = Math.random() < 0.33 ? 'vocabulary' : Math.random() < 0.66 ? 'pronunciation' : 'listenAndChoose';
       setQuestionType(randomType);
     } else {
-      alert('You have completed the vocabulary list!');
+      navigation.goBack();
     }
   };
 
@@ -41,36 +30,44 @@ const StudyMode = () => {
     setSelectedAnswer(answer);
     setIsAnswerChecked(true);
 
-    if (answer === vocabularyList[currentIndex].english) {
+    if (answer === wordsToCheck[currentIndex].word) {
       setCorrectAnswer(answer);
       alert('Correct!');
     } else {
-      setCorrectAnswer(vocabularyList[currentIndex].english);
+      setCorrectAnswer(wordsToCheck[currentIndex].word);
       alert('Incorrect. Try again!');
     }
   };
 
   const handleCheckAnswer = () => {
-    if (selectedAnswer === vocabularyList[currentIndex].english) {
+    if (selectedAnswer === wordsToCheck[currentIndex].word) {
       setCorrectAnswer(selectedAnswer);
       alert('Correct!');
+      // Cập nhật giai đoạn của từ vựng nếu câu trả lời đúng
+      const updatedWords = [...wordsToCheck];
+      updatedWords[currentIndex].stage += 1; // Tăng giai đoạn lên 1
+      // Cập nhật từ vựng với giai đoạn mới
+      route.params.updateWords(updatedWords); // Giả sử có một hàm để cập nhật từ vựng ở component cha
     } else {
-      setCorrectAnswer(vocabularyList[currentIndex].english);
+      setCorrectAnswer(wordsToCheck[currentIndex].word);
       alert('Incorrect. Try again!');
     }
     setIsAnswerChecked(true);
   };
 
   const getRandomAnswers = (correctAnswer) => {
-    const shuffled = [...vocabularyList]
+    // Lấy tất cả các từ khác ngoài từ đúng
+    const incorrectAnswers = wordsToCheck
+      .filter(item => item.word !== correctAnswer)
       .sort(() => 0.5 - Math.random())
-      .map((item) => item.english)
-      .slice(0, 4);
-    if (!shuffled.includes(correctAnswer)) {
-      shuffled.pop();
-      shuffled.push(correctAnswer);
-    }
-return shuffled.sort(() => 0.5 - Math.random());
+      .slice(0, 3) // Lấy 3 từ ngẫu nhiên khác
+      .map(item => item.word);
+
+    // Tạo danh sách các câu trả lời bao gồm câu trả lời đúng và các câu trả lời sai
+    const answers = [correctAnswer, ...incorrectAnswers];
+
+    // Xáo trộn danh sách câu trả lời
+    return answers.sort(() => 0.5 - Math.random());
   };
 
   const getButtonStyle = (answer) => {
@@ -85,16 +82,13 @@ return shuffled.sort(() => 0.5 - Math.random());
     }
     return styles.answerButton;
   };
-
   return (
     <View style={styles.container}>
-      <Header />
+      <Header/>
       <View style={styles.contentContainer}>
-        {/* Title Section */}
         <View style={styles.section}>
           <Text style={styles.title}>TỪ VỰNG LISTENING TOEIC - TOEIC TRAINING VOCAQUEST</Text>
         </View>
-        {/* Progress Bar */}
         <View style={styles.progressSection}>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: `${progress}%` }]} />
@@ -104,9 +98,9 @@ return shuffled.sort(() => 0.5 - Math.random());
         <View style={styles.quizContainer}>
           {questionType === 'vocabulary' && (
             <>
-              <Text style={styles.questionText}>{vocabularyList[currentIndex].vietnamese}</Text>
-              <Text style={styles.typeText}>{vocabularyList[currentIndex].type}</Text>
-              {getRandomAnswers(vocabularyList[currentIndex].english).map((answer, index) => (
+              <Text style={styles.questionText}>{wordsToCheck[currentIndex].meaning}</Text>
+              <Text style={styles.typeText}>{wordsToCheck[currentIndex].type}</Text>
+              {getRandomAnswers(wordsToCheck[currentIndex].word).map((answer, index) => (
                 <TouchableOpacity key={index} style={getButtonStyle(answer)} onPress={() => handleAnswerSelection(answer)}>
                   <Text style={styles.answerButtonText}>{answer}</Text>
                 </TouchableOpacity>
@@ -120,10 +114,10 @@ return shuffled.sort(() => 0.5 - Math.random());
                   <View style={styles.iconContainer}>
                     <Icon name="volume-up" size={60} color="#000" />
                   </View>
-                  <Text style={styles.typeText}>{vocabularyList[currentIndex].type}</Text>
+                  <Text style={styles.typeText}>{wordsToCheck[currentIndex].type}</Text>
                 </View>
                 <View style={styles.answerContainer}>
-                  {getRandomAnswers(vocabularyList[currentIndex].english).map((answer, index) => (
+                  {getRandomAnswers(wordsToCheck[currentIndex].word).map((answer, index) => (
                     <TouchableOpacity key={index} style={getButtonStyle(answer)} onPress={() => handleAnswerSelection(answer)}>
                       <Text style={styles.answerButtonText2}>{answer}</Text>
                     </TouchableOpacity>
@@ -139,11 +133,11 @@ return shuffled.sort(() => 0.5 - Math.random());
                   <View style={styles.iconContainer}>
                     <Icon name="volume-up" size={60} color="#000" />
                   </View>
-                  <Text style={styles.typeText}>{vocabularyList[currentIndex].type}</Text>
+                  <Text style={styles.typeText}>{wordsToCheck[currentIndex].type}</Text>
                 </View>
                 <View style={styles.answerContainer}>
-                  {getRandomAnswers(vocabularyList[currentIndex].vietnamese).map((answer, index) => (
-<TouchableOpacity key={index} style={getButtonStyle(answer)} onPress={() => handleAnswerSelection(answer)}>
+                  {getRandomAnswers(wordsToCheck[currentIndex].meaning).map((answer, index) => (
+                    <TouchableOpacity key={index} style={getButtonStyle(answer)} onPress={() => handleAnswerSelection(answer)}>
                       <Text style={styles.answerButtonText2}>{answer}</Text>
                     </TouchableOpacity>
                   ))}
@@ -152,21 +146,21 @@ return shuffled.sort(() => 0.5 - Math.random());
             </>
           )}
         </View>
-
+                   
         {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleCheckAnswer}>
-            <Text style={styles.buttonText}>Kiểm tra</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={handleNextWord}>
-            <Text style={styles.buttonText}>Tiếp theo</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+         <View style={styles.buttonContainer}>
+           <TouchableOpacity style={styles.actionButton} onPress={handleCheckAnswer}>
+             <Text style={styles.buttonText}>Kiểm tra</Text>
+           </TouchableOpacity>
+           <TouchableOpacity style={styles.actionButton} onPress={handleNextWord}>
+             <Text style={styles.buttonText}>Tiếp theo</Text>
+           </TouchableOpacity>
+         </View>
+       </View>
+     </View>
   );
 };
-
+                   
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -249,60 +243,61 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+     justifyContent: 'space-between',
   },
-  actionButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 10,
+   actionButton: {
+     backgroundColor: '#F87B7A',
+     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: 5,
-    flex: 1,
-    marginHorizontal: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+     borderRadius: 5,
+     flex: 1,
+     marginHorizontal: 10,
+     alignItems: 'center',
+   },
+   buttonText: {
+     color: '#fff',
+     fontSize: 16,
+     fontWeight: 'bold',
+   },
 
-  questionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
+   questionContainer: {
+     flexDirection: 'row',
+     justifyContent: 'space-between',
+     alignItems: 'center',
+     marginBottom: 10,
+   },
 
-  textContainer: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+   textContainer: {
+     flexDirection: 'column',
+     alignItems: 'center',
+     justifyContent: 'center',
+   },
 
-  iconContainer: {
-    marginBottom: 5,
-},
+   iconContainer: {
+     marginBottom: 5,
+ },
 
-  typeText2: {
-    fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
-  },
+   typeText2: {
+     fontSize: 16,
+     color: '#333',
+     textAlign: 'center',
+   },
 
-  answerContainer: {
-    flexDirection: 'column',
-  },
+   answerContainer: {
+     flexDirection: 'column',
+   },
 
-  answerButtonText2: {
-    width: 200,
-    margin: 5,
-    fontSize: 14,
-    color: '#000',
-    textAlign: 'center',
-  },
-  iconContainer: {
-    marginLeft: 10,
-  },
-});
+   answerButtonText2: {
+     width: 200,
+     margin: 5,
+     fontSize: 14,
+     color: '#000',
+     textAlign: 'center',
+   },
+   iconContainer: {
+     marginLeft: 10,
+   },
+ });
 
-export default StudyMode;
+ export default StudyMode;
+                   
